@@ -1,0 +1,2 @@
+[report]
+omit = connectors/quartz.py,connectors/conftest.py,tests/*

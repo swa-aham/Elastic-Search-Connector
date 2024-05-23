@@ -1,0 +1,230 @@
+################################################################################
+###################### catalog-info for connectors ######################
+# Declare a Backstage Component for connectors
+# When doing changes validate them using https://backstage.elastic.dev/entity-validation
+---
+# yaml-language-server: $schema=https://json.schemastore.org/catalog-info.json
+apiVersion: "backstage.io/v1alpha1"
+kind: "Component"
+metadata:
+  name: "elastic-connectors"
+  description: "Ingestion service hosting connectors that can be used to ingest data into Elasticsearch"
+  annotations:
+    backstage.io/source-location: "url:https://github.com/elastic/connectors/"
+    github.com/project-slug: "elastic/connectors"
+    github.com/team-slug: "elastic/ingestion-team"
+    buildkite.com/project-slug: "elastic/connectors"
+  tags:
+    - "python"
+    - "buildkite"
+spec:
+  type: "service"
+  lifecycle: "production"
+  owner: "group:ingestion-team"
+
+# ------------------------------------------------------------------------------
+# this is the main pipeline, triggered via pull requests and merges
+
+---
+apiVersion: "backstage.io/v1alpha1"
+kind: "Resource"
+metadata:
+  name: "connectors"
+  description: "Lints and tests Elastic connector framework and connector implementations"
+  links:
+    - title: "connectors Main Pipeline"
+      url: "https://buildkite.com/elastic/connectors"
+spec:
+  type: "buildkite-pipeline"
+  owner: "group:ingestion-team"
+  system: "buildkite"
+  implementation:
+    apiVersion: "buildkite.elastic.dev/v1"
+    kind: "Pipeline"
+    metadata:
+      name: "connectors"
+      description: "Your Connector Service to ingest data into Elasticsearch"
+    spec:
+      branch_configuration: "main"
+      pipeline_file: ".buildkite/pipeline.yml"
+      repository: "elastic/connectors"
+      provider_settings:
+        skip_pull_request_builds_for_existing_commits: false
+      teams:
+        everyone:
+          access_level: "READ_ONLY"
+        ingestion-team: {}
+        search-productivity-team: {}
+
+# ------------------------------------------------------------------------------
+# nightly pipelines
+
+---
+apiVersion: "backstage.io/v1alpha1"
+kind: "Resource"
+metadata:
+  name: "connectors-nightly"
+  description: "Nightly Connector Service Tests"
+  links:
+    - title: "connectors Nightly Buildkite Jobs"
+      url: "https://buildkite.com/elastic/connectors"
+spec:
+  type: "buildkite-pipeline"
+  owner: "group:ingestion-team"
+  system: "buildkite"
+  implementation:
+    apiVersion: "buildkite.elastic.dev/v1"
+    kind: "Pipeline"
+    metadata:
+      name: "connectors-nightly"
+      description: "Connectors Service Nightly Tests"
+      links:
+        - title: "Connector Service Nightly Pipeline"
+          url: "https://buildkite.com/elastic/connectors-nightly"
+    spec:
+      pipeline_file: ".buildkite/nightly.py"
+      provider_settings:
+        trigger_mode: "none"
+      repository: "elastic/connectors"
+      schedules:
+        Daily 8_13:
+          branch: '8.13'
+          cronline: '@daily'
+          message: "Runs daily `8.13` e2e test"
+        Daily 8_14:
+          branch: '8.14'
+          cronline: '@daily'
+          message: "Runs daily `8.14` e2e test"
+        Daily main:
+          branch: main
+          cronline: '@daily'
+          message: "Runs daily `main` e2e test"
+      teams:
+        everyone:
+          access_level: "READ_ONLY"
+        ingestion-team: {}
+        search-productivity-team: {}
+
+---
+apiVersion: "backstage.io/v1alpha1"
+kind: "Resource"
+metadata:
+  name: "connectors-nightly-aarch64"
+  description: "Nightly Connector Service Tests on aarch64"
+  links:
+    - title: "connectors Nightly Buildkite Jobs"
+      url: "https://buildkite.com/elastic/connectors"
+spec:
+  type: "buildkite-pipeline"
+  owner: "group:ingestion-team"
+  system: "buildkite"
+  implementation:
+    apiVersion: "buildkite.elastic.dev/v1"
+    kind: "Pipeline"
+    metadata:
+      name: "connectors-nightly-aarch64"
+      description: "Connectors Service Nightly Tests on aarch64"
+      links:
+        - title: "Connector Service Nightly Pipeline"
+          url: "https://buildkite.com/elastic/connectors-nightly-aarch64"
+    spec:
+      pipeline_file: ".buildkite/nightly_aarch64.py"
+      provider_settings:
+        trigger_mode: "none"
+      repository: "elastic/connectors"
+      schedules:
+        Daily 8_13:
+          branch: '8.13'
+          cronline: '@daily'
+          message: "Runs daily `8.13` e2e aarch64 test"
+        Daily 8_14:
+          branch: '8.14'
+          cronline: '@daily'
+          message: "Runs daily `8.14` e2e aarch64 test"
+        Daily main:
+          branch: main
+          cronline: '@daily'
+          message: "Runs daily `main` e2e aarch64 test"
+      teams:
+        everyone:
+          access_level: "READ_ONLY"
+        ingestion-team: {}
+        search-productivity-team: {}
+
+---
+apiVersion: "backstage.io/v1alpha1"
+kind: "Resource"
+metadata:
+  name: "connectors-nightly-dockers"
+  description: "Connectors Service Nightly Dockers"
+  links:
+    - title: "connectors Nightly Buildkite Jobs"
+      url: "https://buildkite.com/elastic/connectors"
+spec:
+  type: "buildkite-pipeline"
+  owner: "group:ingestion-team"
+  system: "buildkite"
+  implementation:
+    apiVersion: "buildkite.elastic.dev/v1"
+    kind: "Pipeline"
+    metadata:
+      name: "connectors-nightly-dockers"
+      description: "Connectors Service Nightly Dockers"
+      links:
+        - title: "Connector Service Nightly Pipeline"
+          url: "https://buildkite.com/elastic/connectors-nightly-dockers"
+    spec:
+      pipeline_file: ".buildkite/nightly_docker.yml"
+      provider_settings:
+        trigger_mode: "none"
+      repository: "elastic/connectors"
+      schedules:
+        Daily 8_13:
+          branch: '8.13'
+          cronline: '@daily'
+          message: "Builds and pushes daily `8.13` docker images"
+        Daily 8_14:
+          branch: '8.14'
+          cronline: '@daily'
+          message: "Builds and pushes daily `8.14` docker images"
+        Daily main:
+          branch: main
+          cronline: '@daily'
+          message: "Builds and pushes daily `main` docker images"
+      teams:
+        everyone:
+          access_level: "READ_ONLY"
+        ingestion-team: {}
+        search-productivity-team: {}
+
+########
+# Docker image build and publish - manual release
+########
+---
+apiVersion: "backstage.io/v1alpha1"
+kind: "Resource"
+metadata:
+  name: "connectors-docker-build-publish"
+  description: "Docker image build and publish for Elastic connectors"
+  links:
+    - title: "Connectors Docker Build and Publish"
+      url: "https://buildkite.com/elastic/connectors-docker-build-publish"
+spec:
+  type: "buildkite-pipeline"
+  owner: "group:ingestion-team"
+  system: "buildkite"
+  implementation:
+    apiVersion: "buildkite.elastic.dev/v1"
+    kind: "Pipeline"
+    metadata:
+      name: "connectors-docker-build-publish"
+    spec:
+      repository: "elastic/connectors"
+      pipeline_file: ".buildkite/release-pipeline.yml"
+      provider_settings:
+        trigger_mode: "none"
+      teams:
+        ingestion-team: {}
+        search-productivity-team: {}
+        everyone:
+          access_level: "READ_ONLY"
